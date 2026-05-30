@@ -1,3 +1,5 @@
+Context-sensitive controls don't scale. This does. Proof included
+
 Scalable control scheme abstraction for character action games. Most franchises reinvent their input mapping every iteration, forcing players to relearn fundamentals. This framework locks intent-based controls while supporting radical mechanical variation across characters.
 
 Core Concept:
