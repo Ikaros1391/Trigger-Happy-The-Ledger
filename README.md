@@ -1,5 +1,4 @@
-Problem Statement (lead with this):
-"Scalable control scheme abstraction for character action games. Most franchises reinvent their input mapping every iteration, forcing players to relearn fundamentals. This framework locks intent-based controls while supporting radical mechanical variation across characters."
+Scalable control scheme abstraction for character action games. Most franchises reinvent their input mapping every iteration, forcing players to relearn fundamentals. This framework locks intent-based controls while supporting radical mechanical variation across characters.
 
 Core Concept:
 Five input slots define intent, not action. Circle is repositioning (dodge, dash, teleport—whatever). R2 is primary attack. L2 is secondary/extend. Triangle is melee. Square is utility. Same inputs, infinite implementations.
