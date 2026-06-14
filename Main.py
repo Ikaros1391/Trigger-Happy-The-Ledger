@@ -1,7 +1,8 @@
 import pygame
 import sys
 from EngineController import EngineController
-from Intent import IntentProcessor
+# We import both our move parser and our brand new Margin/Style decay engine here
+from Intent import IntentProcessor, MarginRankEngine
 from StateData import PlayerState
 
 def main():
@@ -11,11 +12,12 @@ def main():
     # Setup your screen size (Zoomed-out character action proportions)
     screen_width = 1280
     screen_height = 720
-    screen = pygame.display.set_set_mode((screen_width, screen_height))
+    screen = pygame.display.set_mode((screen_width, screen_height))
     pygame.display.set_caption("CHIMAERA OVERCLOCK")
     
     # Initialize your proprietary modular handlers
     intent_processor = IntentProcessor()
+    margin_engine = MarginRankEngine()  # Spins up our style metric engine
     controller = EngineController()
     
     # Setup your actors based on your studio's single-player strategy
@@ -43,6 +45,9 @@ def main():
         # Corey's custom movement and physics states update every tick
         controller.player1.physics.update()
         
+        # 📊 STYLE SYSTEM UPDATE TICK: Drops Corey's points frame-by-frame out of combat
+        margin_engine.update_frame_decay(controller.player1)
+        
         # The Debt Collector's physics only update if he is dynamically spawned in
         if controller.player2 is not None:
             controller.player2.physics.update()
@@ -65,7 +70,7 @@ def main():
             pygame.draw.circle(
                 screen, 
                 (0, 0, 255), 
-                (int(controller.player2.physics.y), int(controller.player2.physics.y)), 
+                (int(controller.player2.physics.x), int(controller.player2.physics.y)), 
                 25
             )
 
