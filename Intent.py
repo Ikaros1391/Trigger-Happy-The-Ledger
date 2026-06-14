@@ -26,6 +26,150 @@ class LowPolyPhysicsComponent:
 
 —--------
 
+# =============================================================================
+# THE REAPER: CORDELIA CROSS (MARGIN SIGNATURE CHARACTER)
+# =============================================================================
+
+class CoreyElementSystem:
+    # Keying elements directly to absolute cardinal directions (The Roster Standard)
+    ELEMENT_PYRO = 0  # Flick UP    -> High damage-over-time explosive blast rounds
+    ELEMENT_VOLT = 1  # Flick RIGHT -> Shock stun-lock fields that rapidly build resources
+    ELEMENT_CRYO = 2  # Flick DOWN  -> Flash-freezes targets into solid grapple anchors
+    ELEMENT_SLAG = 3  # Flick LEFT  -> Zero-traction pools for extreme velocity slides
+
+    def __init__(self):
+        self.current_element = self.ELEMENT_PYRO
+        self.stick_is_centered = True
+
+    def process_stick_flick(self, stick_x, stick_y, state):
+        """Monitors the right analog stick for lightning-fast, zero-menu element selection."""
+        tilt_amount = (stick_x * stick_x) + (stick_y * stick_y)
+        if tilt_amount < 0.5:
+            self.stick_is_centered = True
+            return
+
+        if self.stick_is_centered:
+            self.stick_is_centered = False 
+
+            if abs(stick_x) > abs(stick_y):
+                self.current_element = self.ELEMENT_VOLT if stick_x > 0 else self.ELEMENT_SLAG
+            else:
+                self.current_element = self.ELEMENT_PYRO if stick_y > 0 else self.ELEMENT_CRYO
+                
+            self._apply_weapon_glow(state)
+
+    def _apply_weapon_glow(self, state):
+        """Swaps the visual color marker on her modular gun asset with zero performance lag."""
+        if self.current_element == self.ELEMENT_PYRO: state.active_element_color = (1.0, 0.2, 0.0)    # Orange-Red
+        elif self.current_element == self.ELEMENT_VOLT: state.active_element_color = (1.0, 0.9, 0.0)   # Yellow
+        elif self.current_element == self.ELEMENT_CRYO: state.active_element_color = (0.0, 0.6, 1.0)   # Cyan
+        elif self.current_element == self.ELEMENT_SLAG: state.active_element_color = (0.5, 0.0, 1.0)   # Purple
+
+
+class CoreyIntentMap:
+    """
+    Corey (The Reaper) Intent Map.
+    Drives a single shape-shifting weapon frame across high-speed movement and combat states.
+    """
+    def __init__(self, element_system):
+        self.elements = element_system
+        self.is_overclocked = False
+        self.primary_weapon_toggle = 0  # 0 = Dual Pistols, 1 = Shotgun
+
+    def execute_utility(self, state) -> None:
+        """Mapped strictly to SQUARE: Launches an elemental Utility Grenade."""
+        if state.post_hit_frame_window > 0:  # Simple check placeholder for grenade recharge
+            return
+            
+        # Spawns a lightweight projectile that deploys the active element on impact
+        state.spawn_low_poly_grenade(element=self.elements.current_element)
+
+    def execute_relocation(self, state, left_stick) -> None:
+        """Mapped strictly to CIRCLE: High-speed ground slides or mid-air grapnel pulls."""
+        if state.is_grounded:
+            # GROUNDED: Drops into a momentum-based physics slide
+            state.execute_kinetic_slide_cancel(vector=left_stick)
+        else:
+            # AIRBORNE: Tracks targeted environment nodes or Frozen Enemies
+            target = state.get_closest_grapnel_target_in_view()
+            if target and (target.is_frozen() or target.is_environment_anchor()):
+                # Frozen Grapple Rule: Smashes straight through them, shatters target, keeps momentum
+                state.execute_grapnel_reel_pull(target_pos=target.position)
+                state.trigger_low_poly_shatter_vfx(target)
+                state.apply_immediate_velocity_impulse(vector=state.get_forward_vector() * 40.0)
+                state.reset_hover_timer()  # Resets her 2-second flight ceiling
+            else:
+                # Open Air Grapnel fallback
+                state.execute_air_dash_reposition(vector=left_stick)
+
+    def execute_counter(self, state) -> None:
+        """Mapped strictly to TRIANGLE: Close-quarters Bayonet Parry / Automated Rocket Jump."""
+        if state.enemy_is_attacking_in_window():
+            # Defensive Parry: Instant micro-frame reaction against incoming attacks
+            state.execute_bayonet_parry()
+            return
+
+        # Proximity Sandbox Logic (The Rocket Jump Sequence)
+        if state.enemy_in_melee_range():
+            # Automated close proximity chain: Stab -> Vault -> Downward Rocket Blast -> Vertical Launch
+            state.play_animation("bayonet_stab_and_vault")
+            state.apply_downward_rocket_blast_damage()
+            state.apply_vertical_impulse(force=35.0)
+            
+            # Traversal Interaction Rule: Cancels her current hover and completely refills its cooldown
+            state.active_hover = False
+            state.reset_hover_timer()
+        else:
+            # Open Space Logic: Left-stick directed rocket fling propulsion
+            state.play_animation("directional_floor_rocket_blast")
+            # Downward rocket snaps her in the inverse direction of the movement stick, resetting hover fuel
+            state.apply_inverse_stick_propulsion_force()
+            state.active_hover = False
+            state.reset_hover_timer()
+
+    def execute_primary_and_precision(self, state, hold_l2, tap_r2) -> None:
+        """Mapped strictly to L2 + R2: Firing states and Anti-Material Precision manual override."""
+        if hold_l2:
+            # PRECISION OVERRIDE: Over-the-shoulder view with mid-air slow-motion capability
+            state.enter_over_the_shoulder_camera()
+            if not state.is_grounded:
+                state.activate_midair_time_slow()
+                
+            if tap_r2:
+                # Anti-Material Sniper Rifle: Single-shot extreme high commitment damage
+                state.play_animation("anti_material_sniper_fire")
+                state.apply_hitbox(damage=90, hit_stun=HIGH_STUN)
+        else:
+            # Deactivate time-slow and return to standard camera view
+            state.exit_over_the_shoulder_camera()
+            
+            # Overclock Transformation Rule (10-Second Cash Out Mode)
+            if self.is_overclocked:
+                if tap_r2:
+                    # Weapon Morph: Dual Pistols transform into a rapid-fire Assault Rifle
+                    # Automatically infuses her active stick element into every single bullet fired
+                    state.play_animation("assault_rifle_overclock_spray")
+                    state.apply_elemental_infusion_to_shots(element=self.elements.current_element)
+                return
+
+            # STANDARD PRIMARY FIRE MODES (Tapped L2 acts as a binary toggle between modules)
+            if tap_r2:
+                if self.primary_weapon_toggle == 0:
+                    # Dual Pistols: Rapid kinetic hit-stun and continuous score generation
+                    state.play_animation("dual_pistols_rapid_fire")
+                    state.apply_hitbox(damage=10, hit_stun=MINI_STUN)
+                else:
+                    # Modular Shotgun: Hard physical knockback space clearance spacing tool
+                    state.play_animation("shotgun_space_clearance_blast")
+                    state.apply_short_range_blast_hitbox(damage=45, knockback=FORCEFUL)
+                    
+                    # Airborne rule: Shotgun kickback applies a slight backward physical push in mid-air
+                    if not state.is_grounded:
+                        state.apply_immediate_velocity_impulse(vector=-state.get_forward_vector() * 10.0)
+
+
+
+--------
 
 class SageElementSystem:
     # Keying elements directly to absolute cardinal directions (Shared with Corey)
