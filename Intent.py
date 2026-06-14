@@ -408,4 +408,167 @@ class DebtCollectorIntentMap:
             state.swap_boss_weapon_mesh(self.active_weapon_mesh)
             
             if tap_r2:
-  
+                    # Fast, relentless flurry of close-range slices to force player movement
+                    state.play_animation("dual_dagger_hyper_flurry")
+
+
+class DebtCollectorBrainLoop:
+    """Manages the Kill-Steal bounty race, tactical updates, and Newtonian momentum fairness."""
+    
+    def process_boss_targeting(self, state, arena_enemy_pool, player_corey):
+        """Forces him to clear basic anomalies first to secure a proper 1-on-1 duel."""
+        if len(arena_enemy_pool) > 1:
+            target_anomaly = state.get_closest_anomaly_excluding_player()
+            state.set_ai_target(target_anomaly)
+        else:
+            state.set_ai_target(player_corey)
+
+    def update_boss_physics(self, delta_time, state, intent_map):
+        """Ensures his heavy Nemesis-class frame retains surprising, athletic agility."""
+        friction_coefficient = 1.8
+        
+        # Fair Window: SSS tier AI can overshoot landings if Corey slide-cancels perfectly
+        if state.is_overshooting_slingshot_arc() and intent_map.ai_tier == 2:
+            friction_coefficient = 0.4
+            
+        if state.is_touching_slag_volume():
+            friction_coefficient = 0.2
+            
+        state.velocity_x -= state.velocity_x * friction_coefficient * delta_time
+        state.velocity_z -= state.velocity_z * friction_coefficient * delta_time
+
+
+# =============================================================================
+# THE ENIGMATIC ALCHEMIST: ZEN (SECRET UNLOCKED UNHINGED SHOPKEEPER)
+# =============================================================================
+
+class ZenElementSystem:
+    # Keying elements directly to absolute cardinal directions (Shared Roster Matrix)
+    ELEMENT_PYRO = 0  # Flick UP    -> Thermal corrosion damage-over-time pools
+    ELEMENT_VOLT = 1  # Flick RIGHT -> Conduction canister hit-stun arcs
+    ELEMENT_CRYO = 2  # Flick DOWN  -> Flash-freezes targets into immobile anchors
+    ELEMENT_SLAG = 3  # Flick LEFT  -> Massive zero-friction acceleration runways
+
+    def __init__(self):
+        self.current_element = self.ELEMENT_PYRO
+        self.stick_is_centered = True
+
+    def process_stick_flick(self, stick_x, stick_y, state):
+        tilt_amount = (stick_x * stick_x) + (stick_y * stick_y)
+        if tilt_amount < 0.5:
+            self.stick_is_centered = True
+            return
+
+        if self.stick_is_centered:
+            self.stick_is_centered = False 
+
+            if abs(stick_x) > abs(stick_y):
+                self.current_element = self.ELEMENT_VOLT if stick_x > 0 else self.ELEMENT_SLAG
+            else:
+                self.current_element = self.ELEMENT_PYRO if stick_y > 0 else self.ELEMENT_CRYO
+                
+            self._apply_alchemical_glow(state)
+
+    def _apply_alchemical_glow(self, state):
+        if self.current_element == self.ELEMENT_PYRO: state.flask_glow = (1.0, 0.2, 0.0)
+        elif self.current_element == self.ELEMENT_VOLT: state.flask_glow = (1.0, 0.9, 0.0)
+        elif self.current_element == self.ELEMENT_CRYO: state.flask_glow = (0.0, 0.6, 1.0)
+        elif self.current_element == self.ELEMENT_SLAG: state.flask_glow = (0.5, 0.0, 1.0)
+
+
+class ZenIntentMap:
+    """Maps massive AoE material hazards, perfect-dodge clones, and UI deception."""
+    def __init__(self, element_system):
+        self.elements = element_system
+        self.is_overclocked = False
+
+    def execute_utility(self, state) -> None:
+        """Mapped strictly to SQUARE: Deploys massive Elemental Catalyst Pools."""
+        active_type = self.elements.current_element
+        state.spawn_large_catalyst_pool_volume(element=active_type, radius=6.0, duration=8.0)
+
+    def execute_relocation(self, state, left_stick) -> None:
+        """Mapped strictly to CIRCLE: Vapor-Trail Sprint Dashing & Vortex Traversal."""
+        if state.is_grounded:
+            state.execute_elemental_vapor_dash(vector=left_stick, element=self.elements.current_element)
+        else:
+            target = state.get_closest_grapnel_target_in_view()
+            if target and (target.is_frozen() or target.is_environment_anchor()):
+                state.execute_vapor_vortex_zip(target_pos=target.position)
+                state.apply_immediate_velocity_impulse(vector=state.get_forward_vector() * 50.0)
+                state.reset_hover_timer()
+            else:
+                state.execute_elemental_vapor_dash(vector=left_stick, element=self.elements.current_element)
+
+    def execute_counter(self, state) -> None:
+        """Mapped strictly to TRIANGLE: Perfect Dodge Clones & Ground-Burst Launch."""
+        if state.enemy_is_attacking_in_window():
+            # PERFECT DODGE PARRY: Blinks Zen safe, leaving an explosive clone as bait
+            state.execute_perfect_dodge_blink()
+            state.spawn_detonating_decoy_clone(element=self.elements.current_element)
+            return
+
+        if not state.is_grounded:
+            state.execute_quick_air_solvent_spray()
+            return
+
+        # Ground Launch: Capsule propels Zen up while leaving a decoy below to gather enemies
+        state.play_animation("ground_burst_capsule_launch")
+        state.spawn_stable_decoy_clone_on_floor()
+        state.apply_vertical_impulse(force=35.0)
+        state.reset_hover_timer()
+
+    def execute_primary_and_precision(self, state, hold_l2, tap_r2) -> None:
+        """Mapped strictly to L2 + R2: Magnum Opus vs. Continuous Volley / Centrifugal Blast."""
+        if hold_l2:
+            state.enter_over_the_shoulder_camera()
+            state.play_animation("shake_volatile_master_flask_loop")
+            
+            if tap_r2:
+                # Magnum Opus mortar shell detonates all floor pools simultaneously
+                state.launch_magnum_opus_payload()
+                state.trigger_universal_chain_reaction_detonation()
+                state.trigger_temporary_hud_glitch_scramble(duration_seconds=2.0)
+        else:
+            if state.hud_is_scrambled:  # Reusing flag contextually for shotgun intent check
+                if tap_r2:
+                    # Centrifugal vacuum pushes explosion outward, keeping robes 100% clean
+                    state.play_animation("centrifugal_vacuum_jug_shatter")
+                    state.apply_robes_safe_outer_radial_knockback(radius=5.0)
+                    state.ignite_local_status_pools_in_radius()
+            else:
+                if tap_r2:
+                    state.hurl_high_frequency_splag_chain_test_tubes()
+                    if state.current_health % 5 == 0:  # Temporary structural check for UI flicker
+                        state.trigger_fake_hud_element_flicker()
+
+
+class ZenPhysicsAndStyleLoop:
+    """Manages Zen's deceptive Margin checklist, shared Runic Hover data, and Overclock."""
+    
+    def process_margin_scoring(self, state, chemical_tracker, margin_score):
+        if chemical_tracker.has_triggered_reaction_combo():
+            margin_score.spike_rank_massively()
+        if state.should_troll_player_hud():
+            state.display_fake_style_data_overlay()
+
+    def update_runic_movement(self, delta_time, state):
+        """Shares Sage's exact runic spell animations, weaponizing asset reuse into mysterious lore."""
+        if state.combo_gravity_lock:
+            state.velocity_y = 0.0
+            return
+
+        if state.active_hover:
+            # Visually instantiates Sage's exact sorcerous rune rings beneath Zen's boots
+            state.spawn_reused_sage_runic_particles_beneath_boots()
+            state.hover_fuel -= delta_time
+            if state.hover_fuel <= 0:
+                state.active_hover = False
+        elif not state.is_grounded:
+            state.velocity_y -= 9.8 * delta_time
+
+    def process_overclock_anarchy(self, delta_time, zen_intent, state):
+        """Scrambles HUD into pure sensory overload."""
+        if zen_intent.is_overclocked:
+            state.scramble_entire_hud_into_stock_ticker_and_gossip_text()
+
