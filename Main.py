@@ -55,7 +55,7 @@ class GameInstance:
         self.player_intent = CoreyIntentMap(self.player_elements)
         
         # Hook everything into the universal master loop brain
-        self.engine = EngineController(self.player_intent, self.player_elements, None)
+        self.engine = EngineController(self.player_intent, self.player_elements, self.player_physics)
 
     def initialize_combat_room(self, anomaly_count):
         """Bootstraps a fresh arena and runs the random stalker boss check."""
