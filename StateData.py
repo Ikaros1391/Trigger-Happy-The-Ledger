@@ -11,37 +11,39 @@ class PlayerState:
     def __init__(self, character_name):
         self.character_name = character_name
         
-        # Hypercapitalist Economy Tracking
-        self.debt_total = 1000000.0  # Project Redgrave initial price tag
+        # 🧾 Hypercapitalist Redgrave Corporation Debt
+        self.debt_total = 1000000.0  
         self.cash_in_hand = 0.0
         
-        # Defensive Attrition Layer
+        # 🛡️ Defensive Attrition Layer (Low health, breakable plates)
         self.max_health = 50
         self.current_health = 50
-        self.armor_plates = 3        # Absorbs full hits before health is touched
+        self.armor_plates = 3        
         
-        # Advanced Overclock Engine ("Reaper Mode")
-        self.overclock_meter = 0.0    # Builds to 100.0 to activate
+        # ⚡ Advanced Overclock Engine ("Reaper Mode")
+        self.overclock_meter = 0.0    
         self.is_reaper_mode = False
         self.reaper_timer = 0.0
         self.active_element_infusion = None
         
-        # Core Margin Metrics (Rank D to SSS)
+        # 📊 Core Margin / Style Metrics (Rank D to SSS)
         self.margin_points = 0.0
         self.margin_rank = "D"
         self.margin_decay_timer = 0.0
-        self.stagnation_penalty_multiplier = 1.0  # Rises if you spam attacks
-        self.combo_history = []                    # Tracks recent actions to spot repetition
+        self.stagnation_penalty_multiplier = 1.0  
+        self.combo_history = []                    
         
-        # Shared Modular Configurations
-        self.canisters = {"Slag": 0, "Pyro": 0, "Cryo": 0, "Volt": 0}
+        # 🔫 Modular Weapon Frame / Canister Settings
+        self.chimaera_weapon_form = "Pistol"  
+        self.canisters = {"Slag": 3, "Pyro": 3, "Cryo": 3, "Volt": 3}
         self.cooldowns = {}
         
-        # All characters pull from the same movement vectors
+        # Physics Engine Connection
         spawn_x = 100 if character_name == "Corey" else 900
         self.physics = PhysicsObject(x=spawn_x, y=0)
         
         self.metadata = {
             "frame_config": [0] * 60,
             "input_buffer": []
-        }
+    }
+    
